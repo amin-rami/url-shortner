@@ -8,7 +8,6 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpR
 from django.urls import reverse
 from .models import Url
 from rest_framework.decorators import api_view
-from .urls import urlpatterns 
 
 time_diff = timedelta(hours=4, minutes = 30)
 
