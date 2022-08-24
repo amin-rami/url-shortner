@@ -7,5 +7,11 @@ class Url(models.Model):
     clicks = models.IntegerField()
     time_created = models.CharField(max_length=100)
 
+    def __str__(self):
+        s = f'long_url: {self.long_url}     short_url: {self.short_url}        clicks: {self.clicks}       time created: {self.time_created}'
+        return s
+
+
+
 
 
