@@ -7,4 +7,5 @@ class Url(models.Model):
     clicks = models.IntegerField()
     time_created = models.CharField(max_length=100)
 
-    
+
+
