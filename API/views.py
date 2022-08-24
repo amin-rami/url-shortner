@@ -11,9 +11,11 @@ from .models import Url
 
 # TODO: what to do if there are query parameters in the url
 def shortner_api(request: HttpRequest):
-    params = dict(request.GET)
+    body_unicode = request.body.decode('utf-8')
+    params = dict(json.loads(body_unicode))
     response_data = {'massege': ''}
     DOMAIN = 'localhost:8000/api/short?url='        #can be imporved
+    
 
     try:
         long_url = params.pop('url')
