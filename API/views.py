@@ -8,59 +8,42 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpR
 import json
 from django.urls import reverse
 from .models import Url
+from rest_framework.decorators import api_view
 
-# TODO: what to do if there are query parameters in the url
+
+@api_view(['POST', 'GET'])
 def shortner_api(request: HttpRequest):
+
     body_unicode = request.body.decode('utf-8')
     params = dict(json.loads(body_unicode))
     response_data = {'massege': ''}
-    DOMAIN = 'localhost:8000/api/short?url='        #can be imporved
-    
+    DOMAIN = 'localhost:8000/api/short/'  # can be imporved
 
     try:
         long_url = params.pop('url')
-        long_url = long_url[0]
-        if params:
-            raise Exception
-    except:
-        response_data['massege'] = 'Bad request format'     
-        return HttpResponseBadRequest(json.dumps(response_data))
-
-    url_exists = Url.objects.filter(long_url=long_url).exists()
-
-    if url_exists:
-        response_data['massege'] = 'Success! returning an existent url'
-        short_url = Url.objects.get(long_url=long_url).short_url
-        response_data['short_url'] = DOMAIN + short_url
-        response_data['is_new'] = False
-
-    else:
-        short_url = short_url_create()
-        clicks = 0
-        now = datetime.now()
-        now = now.strftime("%Y/%m/%d %H:%M")
-        url = Url(long_url=long_url, short_url=short_url,
-                  clicks=clicks, time_created=now)
-        url.save()
-        response_data['massege'] = 'Success! returning a new url'
-        response_data['short_url'] = DOMAIN + short_url
-        response_data['is_new'] = True
-
-    return HttpResponse(json.dumps(response_data))
-
-# TODO: absolute path
-def redirect_api(request: HttpRequest):
-    params = dict(request.GET)
-    response_data = {'massege': ''}
-
-    try:
-        short_url = params.pop('url')
-        short_url = short_url[0]
         if params:
             raise Exception
     except:
         response_data['massege'] = 'Bad request format'
         return HttpResponseBadRequest(json.dumps(response_data))
+
+
+    short_url = short_url_create()
+    clicks = 0
+    now = datetime.now()
+    now = now.strftime("%Y/%m/%d %H:%M")
+    url = Url(long_url=long_url, short_url=short_url,
+                clicks=clicks, time_created=now)
+    url.save()
+    response_data['massege'] = 'Success! returning a new url'
+    response_data['short_url'] = DOMAIN + short_url
+    response_data['is_new'] = True
+
+    return HttpResponse(json.dumps(response_data))
+
+@api_view(['POST', 'GET'])
+def redirect_api(request: HttpRequest, short_url):
+    response_data = {'massege': ''}
 
     url_exists = Url.objects.filter(short_url=short_url).exists()
 
@@ -70,8 +53,13 @@ def redirect_api(request: HttpRequest):
 
     url = Url.objects.get(short_url=short_url)
     url.clicks += 1
+    now = datetime.now()
+    now = now.strftime("%Y/%m/%d %H:%M")
+    url.last_access = now
     url.save()
     long_url = url.long_url
+    if not ('http://' in long_url or 'https://' in long_url):
+        long_url = 'http://' + long_url
     return HttpResponseRedirect(long_url)
 
 
