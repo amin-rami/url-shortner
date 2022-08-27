@@ -1,13 +1,19 @@
 from datetime import datetime, timedelta
+from genericpath import exists
 import json
 import string
 import random
-from urllib import response
+from urllib import request, response
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse
 from .models import Url
 from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
+from django.contrib.auth import logout, authenticate, login
+import django.contrib.auth
+from django.contrib.auth.middleware import AuthenticationMiddleware
+
 
 time_diff = timedelta(hours=4, minutes = 30)
 
@@ -77,3 +83,75 @@ def short_url_create():
             break
 
     return short_url
+
+
+@api_view(['POST', 'GET'])
+def signup_api(request):
+
+    body_unicode = request.body.decode('utf-8')
+    params = dict(json.loads(body_unicode))
+    response_data = {'message': ''}
+
+    try:
+        username = params.pop('username')
+        password = params.pop('password')
+        if params:
+            raise Exception
+    except:
+        response_data['message'] = 'Bad request format'
+        return HttpResponseBadRequest(json.dumps(response_data))
+
+    exists = User.objects.filter(username=username).exists()
+    if exists:
+        response_data['message'] = 'Username already exists'
+        return HttpResponse(json.dumps(response_data))
+    
+    user = User.objects.create_user(username=username, password=password)
+    user.save()
+
+    response_data['message'] = f'Success! {username}, welcome to our website'
+    return HttpResponse(json.dumps(response_data))
+
+@api_view(['POST', 'GET'])
+def login_api(request):
+    logout(request)
+    body_unicode = request.body.decode('utf-8')
+    params = dict(json.loads(body_unicode))
+    response_data = {'message': ''}
+
+    try:
+        username = params.pop('username')
+        password = params.pop('password')
+        if params:
+            raise Exception
+    except:
+        response_data['message'] = 'Bad request format'
+        return HttpResponseBadRequest(json.dumps(response_data))
+
+
+    user = authenticate(request, username=username, password=password)
+
+    if user is not None:
+        login(request, user)
+        response_data['message'] = f'Logged in successfully! Welcome back, {user.get_username()}' #add user's name
+        return HttpResponse(json.dumps(response_data))
+    
+    else:
+        response_data['message'] = 'Incorrect username or password'
+        return HttpResponse(json.dumps(response_data))
+
+
+@api_view(['POST', 'GET'])
+def logout_api(request: HttpRequest):
+    logout(request)
+    response_data = {'message': 'Successfully logged out!'}
+    return HttpResponse(json.dumps(response_data))
+
+@api_view(['POST', 'GET'])
+def is_logged(requset: HttpRequest):
+    if requset.user.is_authenticated:
+        return HttpResponse(f'{requset.user.get_username()}')
+    else:
+        return HttpResponse('Not logged')
+
+
