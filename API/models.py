@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 
 
 class Url(models.Model):
@@ -11,7 +11,7 @@ class Url(models.Model):
     clicks = models.IntegerField(blank=True)
     time_created = models.CharField(max_length=100)
     last_access = models.CharField(max_length=100, blank=True)
-    owner = models.CharField(max_length=1000, blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         s = f'long_url: {self.long_url}     short_url: {self.short_url}        clicks: {self.clicks}       time created: {self.time_created}'

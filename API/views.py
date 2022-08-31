@@ -3,7 +3,7 @@ import json
 import string
 import random
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpResponseNotFound, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpResponseNotFound, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from .models import Url
 from rest_framework.request import Request
@@ -13,12 +13,25 @@ from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.middleware.common import CommonMiddleware
 from django.views.decorators.csrf import csrf_exempt
 import re
+from ipware import get_client_ip
 
 time_diff = timedelta(hours=4, minutes=30)
 
 
+def method_check(request: HttpRequest, allowed):
+    method = request.method
+    if method == allowed:
+        return True
+    return False
+
+
 @csrf_exempt
 def shortner_api(request: HttpRequest):
+    response_data = {}
+    allowed_method = 'POST'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
 
     body_unicode = request.body.decode('utf-8')
     params = dict(json.loads(body_unicode))
@@ -31,7 +44,7 @@ def shortner_api(request: HttpRequest):
             raise Exception
     except:
         response_data['message'] = 'Bad request format'
-        return HttpResponseBadRequest(json.dumps(response_data))
+        return JsonResponse(response_data, status=400)
 
     if request.user.is_authenticated:
         user = request.user
@@ -63,18 +76,23 @@ def shortner_api(request: HttpRequest):
         response_data['message'] = 'Success!'
         response_data['short_url'] = DOMAIN + short_url
 
-    return HttpResponse(json.dumps(response_data))
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
 def redirect_api(request: Request, short_url):
-    response_data = {'message': ''}
+    response_data = {}
+    allowed_method = 'GET'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
 
+    response_data = {'message': ''}
     url_exists = Url.objects.filter(short_url=short_url).exists()
 
     if not url_exists:
         response_data['message'] = 'Such short url does not exist'
-        return HttpResponseNotFound(json.dumps(response_data))
+        return JsonResponse(response_data, status=404)
 
     url = Url.objects.get(short_url=short_url)
     if mobile(request):
@@ -111,6 +129,11 @@ def short_url_create():
 
 @csrf_exempt
 def signup_api(request):
+    response_data = {}
+    allowed_method = 'POST'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
 
     body_unicode = request.body.decode('utf-8')
     params = dict(json.loads(body_unicode))
@@ -123,22 +146,27 @@ def signup_api(request):
             raise Exception
     except:
         response_data['message'] = 'Bad request format'
-        return HttpResponseBadRequest(json.dumps(response_data))
+        return JsonResponse(response_data, status=400)
 
     exists = User.objects.filter(username=username).exists()
     if exists:
         response_data['message'] = 'Username already exists'
-        return HttpResponse(json.dumps(response_data))
+        return JsonResponse(response_data, status=403)
 
     user = User.objects.create_user(username=username, password=password)
     user.save()
 
     response_data['message'] = f'Success! {username}, welcome to our website'
-    return HttpResponse(json.dumps(response_data))
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
 def login_api(request):
+    response_data = {}
+    allowed_method = 'POST'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
     logout(request)
     body_unicode = request.body.decode('utf-8')
     params = dict(json.loads(body_unicode))
@@ -151,44 +179,61 @@ def login_api(request):
             raise Exception
     except:
         response_data['message'] = 'Bad request format'
-        return HttpResponseBadRequest(json.dumps(response_data))
+        return JsonResponse(response_data, status=400)
 
     user = authenticate(request, username=username, password=password)
 
     if user is not None:
         login(request, user)
-        # add user's name
         response_data['message'] = f'Logged in successfully! Welcome back, {user.get_username()}'
-        return HttpResponse(json.dumps(response_data))
+        return JsonResponse(response_data)
 
     else:
         response_data['message'] = 'Incorrect username or password'
-        return HttpResponse(json.dumps(response_data))
+        return JsonResponse(response_data, status=401)
 
 
 @csrf_exempt
 def logout_api(request: HttpRequest):
+    response_data = {}
+    allowed_method = 'GET'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
     logout(request)
     response_data = {'message': 'Successfully logged out!'}
-    return HttpResponse(json.dumps(response_data))
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
-def is_logged(requset: HttpRequest):
-    if requset.user.is_authenticated:
-        return HttpResponse(f'{requset.user.get_username()}')
+def status(request: HttpRequest):
+    response_data = {}
+    allowed_method = 'GET'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
+    response_data = {}
+    ip, is_routable = get_client_ip(request)
+    if request.user.is_authenticated:
+        response_data['message'] = f'Logged in as {request.user.username}'
     else:
-        return HttpResponse(json.dumps({'message': 'Not logged'}))
+        response_data['message'] = f'Logged in as Anonymous User'
 
-
+    response_data['ip'] = ip if ip is not None else 'Unknown IP'
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
 def edit(request: HttpRequest):
+    response_data = {}
+    allowed_method = 'POST'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
     response_data = {'message': ''}
     if not request.user.is_authenticated:
         response_data['message'] = 'Not logged in'
-        return HttpResponse(json.dumps(response_data))
+        return JsonResponse(response_data, status=401)
 
     user = request.user
     body_unicode = request.body.decode('utf-8')
@@ -200,7 +245,7 @@ def edit(request: HttpRequest):
         delete = params.pop('delete', 'False')
     except:
         response_data['message'] = 'Bad request format'
-        HttpResponseBadRequest(json.dumps(response_data))
+        return JsonResponse(response_data, status=400)
 
     user.username = user_name
     user.set_password(password)
@@ -209,7 +254,7 @@ def edit(request: HttpRequest):
         user.delete()
 
     response_data['message'] = 'Changes saved successfully'
-    return HttpResponse(json.dumps(response_data))
+    return JsonResponse(response_data)
 
 
 @csrf_exempt
@@ -222,3 +267,25 @@ def mobile(request: HttpRequest):
         return True
     else:
         return False
+
+
+@csrf_exempt
+def my_urls(request: HttpRequest):
+    response_data = {}
+    allowed_method = 'GET'
+    if not method_check(request, allowed_method):
+        response_data['message'] = 'Request method not allowed'
+        return JsonResponse(response_data, status=405)
+    response_data = {'message': ''}
+    if not request.user.is_authenticated:
+        response_data['message'] = 'Not logged in'
+        return JsonResponse(response_data, status=401)
+
+    user = request.user
+    urls = Url.objects.filter(owner=user.username)
+
+    url_list = {}
+    for i, url in enumerate(urls):
+        url_list[i+1] = dict(id=url.id, long_url=url.long_url, short_url=url.short_url,
+                             desktop_clicks=url.desktop_clicks, mobile_clicks=url.mobile_clicks, clicks=url.clicks, time_created=url.time_created, last_access=url.last_access, owner=url.owner)
+    return JsonResponse(url_list)

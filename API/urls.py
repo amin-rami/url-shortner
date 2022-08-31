@@ -8,6 +8,7 @@ urlpatterns = [
     path('users/login', views.login_api),
     path('users/logout', views.logout_api),
     path('users/signup', views.signup_api),
-    path('users/islogged', views.is_logged),
-    path('users/edit', views.edit)
+    path('users/status', views.status),
+    path('users/edit', views.edit),
+    path('users/myurls', views.my_urls)
 ]
