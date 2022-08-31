@@ -2,12 +2,10 @@ from datetime import datetime, timedelta
 import json
 import string
 import random
-from urllib import request, response
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest, HttpRequest, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse
 from .models import Url
-from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from django.contrib.auth.models import User
 from django.contrib.auth import logout, authenticate, login
@@ -20,7 +18,6 @@ time_diff = timedelta(hours=4, minutes=30)
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def shortner_api(request: HttpRequest):
 
     body_unicode = request.body.decode('utf-8')
@@ -70,7 +67,6 @@ def shortner_api(request: HttpRequest):
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def redirect_api(request: Request, short_url):
     response_data = {'message': ''}
 
@@ -114,7 +110,6 @@ def short_url_create():
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def signup_api(request):
 
     body_unicode = request.body.decode('utf-8')
@@ -143,7 +138,6 @@ def signup_api(request):
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def login_api(request):
     logout(request)
     body_unicode = request.body.decode('utf-8')
@@ -173,7 +167,6 @@ def login_api(request):
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def logout_api(request: HttpRequest):
     logout(request)
     response_data = {'message': 'Successfully logged out!'}
@@ -181,7 +174,6 @@ def logout_api(request: HttpRequest):
 
 
 @csrf_exempt
-@api_view(['POST', 'GET'])
 def is_logged(requset: HttpRequest):
     if requset.user.is_authenticated:
         return HttpResponse(f'{requset.user.get_username()}')
@@ -192,14 +184,16 @@ def is_logged(requset: HttpRequest):
 
 
 @csrf_exempt
-def edit(requset: HttpRequest):
+def edit(request: HttpRequest):
     response_data = {'message': ''}
-    if not requset.user.is_authenticated:
+    if not request.user.is_authenticated:
         response_data['message'] = 'Not logged in'
         return HttpResponse(json.dumps(response_data))
 
-    user = requset.user
-    params = dict(request.POST)
+    user = request.user
+    body_unicode = request.body.decode('utf-8')
+    params = dict(json.loads(body_unicode))
+    response_data = {'message': ''}
     try:
         user_name = params.pop('username', user.username)
         password = params.pop('password', user.password)
@@ -214,8 +208,8 @@ def edit(requset: HttpRequest):
     if delete == 'True':
         user.delete()
 
-    response['message'] = 'Changes saved successfully'
-    HttpResponse(json.dumps(response))
+    response_data['message'] = 'Changes saved successfully'
+    return HttpResponse(json.dumps(response_data))
 
 
 @csrf_exempt
