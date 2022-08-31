@@ -203,7 +203,7 @@ def edit(request: HttpRequest):
         HttpResponseBadRequest(json.dumps(response_data))
 
     user.username = user_name
-    user.set_password = password
+    user.set_password(password)
     user.save()
     if delete == 'True':
         user.delete()
