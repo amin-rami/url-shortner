@@ -1,11 +1,14 @@
 from django.db import models
 
 
+
 class Url(models.Model):
     id = models.AutoField(primary_key=True)
     long_url = models.CharField(max_length=500)
     short_url = models.CharField(max_length=500)
-    clicks = models.IntegerField()
+    mobile_clicks = models.IntegerField(blank=True, default=0)
+    desktop_clicks = models.IntegerField(blank=True, default=0)
+    clicks = models.IntegerField(blank=True)
     time_created = models.CharField(max_length=100)
     last_access = models.CharField(max_length=100, blank=True)
     owner = models.CharField(max_length=1000, blank=True)
