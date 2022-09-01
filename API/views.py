@@ -48,10 +48,10 @@ def shortner_api(request: HttpRequest):
 
     if request.user.is_authenticated:
         user = request.user
-        exists = Url.objects.filter(long_url=long_url).exists()
+        exists = Url.objects.filter(long_url=long_url, owner=user).exists()
         if exists:
             response_data['message'] = 'Success!'
-            short_url = Url.objects.get(long_url=long_url).short_url
+            short_url = Url.objects.get(long_url=long_url, owner=user).short_url
             response_data['short_url'] = DOMAIN + short_url
 
         else:
@@ -60,7 +60,7 @@ def shortner_api(request: HttpRequest):
             now = datetime.now() + time_diff
             now = now.strftime("%Y/%m/%d %H:%M")
             url = Url(long_url=long_url, short_url=short_url,
-                      clicks=clicks, time_created=now, owner=user.username)
+                      clicks=clicks, time_created=now, owner=user)
             url.save()
             response_data['message'] = 'Success!'
             response_data['short_url'] = DOMAIN + short_url
@@ -240,15 +240,23 @@ def edit(request: HttpRequest):
     params = dict(json.loads(body_unicode))
     response_data = {'message': ''}
     try:
-        user_name = params.pop('username', user.username)
-        password = params.pop('password', user.password)
+        user_name = params.pop('username', None)
+        password = params.pop('password', None)
         delete = params.pop('delete', 'False')
+        if params:
+            raise Exception
     except:
         response_data['message'] = 'Bad request format'
         return JsonResponse(response_data, status=400)
+    
+    if User.objects.filter(username=user_name).exists() and user_name != user.username:
+        response_data['message'] = 'Failed to save chenges. Username already exists!'
+        return JsonResponse(response_data)
 
-    user.username = user_name
-    user.set_password(password)
+    if user_name is not None:
+        user.username = user_name
+    if password is not None:
+        user.set_password(password)
     user.save()
     if delete == 'True':
         user.delete()
@@ -282,10 +290,11 @@ def my_urls(request: HttpRequest):
         return JsonResponse(response_data, status=401)
 
     user = request.user
-    urls = Url.objects.filter(owner=user.username)
+    urls = Url.objects.filter(owner=user)
 
     url_list = {}
     for i, url in enumerate(urls):
         url_list[i+1] = dict(id=url.id, long_url=url.long_url, short_url=url.short_url,
-                             desktop_clicks=url.desktop_clicks, mobile_clicks=url.mobile_clicks, clicks=url.clicks, time_created=url.time_created, last_access=url.last_access, owner=url.owner)
+                             desktop_clicks=url.desktop_clicks, mobile_clicks=url.mobile_clicks, clicks=url.clicks, time_created=url.time_created, last_access=url.last_access, owner=url.owner.username)
+    
     return JsonResponse(url_list)
