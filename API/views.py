@@ -108,7 +108,6 @@ def redirect_api(request: Request, short_url):
     long_url = url.long_url
     if not ('http://' in long_url or 'https://' in long_url):
         long_url = 'http://' + long_url
-    return JsonResponse({'long_url': long_url})
     return HttpResponseRedirect(long_url)
 
 
