@@ -1,0 +1,2 @@
+sudo docker build . -t url_shortner
+sudo docker run --publish 8000:8000 url_shortner
