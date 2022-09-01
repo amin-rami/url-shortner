@@ -51,7 +51,8 @@ def shortner_api(request: HttpRequest):
         exists = Url.objects.filter(long_url=long_url, owner=user).exists()
         if exists:
             response_data['message'] = 'Success!'
-            short_url = Url.objects.get(long_url=long_url, owner=user).short_url
+            short_url = Url.objects.get(
+                long_url=long_url, owner=user).short_url
             response_data['short_url'] = DOMAIN + short_url
 
         else:
@@ -107,6 +108,7 @@ def redirect_api(request: Request, short_url):
     long_url = url.long_url
     if not ('http://' in long_url or 'https://' in long_url):
         long_url = 'http://' + long_url
+    return JsonResponse({'long_url': long_url})
     return HttpResponseRedirect(long_url)
 
 
@@ -248,7 +250,7 @@ def edit(request: HttpRequest):
     except:
         response_data['message'] = 'Bad request format'
         return JsonResponse(response_data, status=400)
-    
+
     if User.objects.filter(username=user_name).exists() and user_name != user.username:
         response_data['message'] = 'Failed to save chenges. Username already exists!'
         return JsonResponse(response_data)
@@ -296,5 +298,5 @@ def my_urls(request: HttpRequest):
     for i, url in enumerate(urls):
         url_list[i+1] = dict(id=url.id, long_url=url.long_url, short_url=url.short_url,
                              desktop_clicks=url.desktop_clicks, mobile_clicks=url.mobile_clicks, clicks=url.clicks, time_created=url.time_created, last_access=url.last_access, owner=url.owner.username)
-    
+
     return JsonResponse(url_list)
