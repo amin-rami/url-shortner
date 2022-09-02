@@ -312,4 +312,3 @@ def unpack(dic: dict):
 def docs(request: HttpRequest):
     path = 'API/docs.html'
     return render(request, path)
-
