@@ -33,8 +33,8 @@ def shortner_api(request: HttpRequest):
         response_data['message'] = 'Request method not allowed'
         return JsonResponse(response_data, status=405)
 
-    body_unicode = request.body.decode('utf-8')
-    params = dict(json.loads(body_unicode))
+    params = dict(request.POST)
+    unpack(params)
     response_data = {'message': ''}
     DOMAIN = 'localhost:8000/api/short/'  # can be imporved
 
@@ -108,6 +108,7 @@ def redirect_api(request: Request, short_url):
     long_url = url.long_url
     if not ('http://' in long_url or 'https://' in long_url):
         long_url = 'http://' + long_url
+    print(long_url)
     return HttpResponseRedirect(long_url)
 
 
@@ -136,8 +137,8 @@ def signup_api(request):
         response_data['message'] = 'Request method not allowed'
         return JsonResponse(response_data, status=405)
 
-    body_unicode = request.body.decode('utf-8')
-    params = dict(json.loads(body_unicode))
+    params = dict(request.POST)
+    unpack(params)
     response_data = {'message': ''}
 
     try:
@@ -169,8 +170,8 @@ def login_api(request):
         response_data['message'] = 'Request method not allowed'
         return JsonResponse(response_data, status=405)
     logout(request)
-    body_unicode = request.body.decode('utf-8')
-    params = dict(json.loads(body_unicode))
+    params = dict(request.POST)
+    unpack(params)
     response_data = {'message': ''}
 
     try:
@@ -237,8 +238,8 @@ def edit(request: HttpRequest):
         return JsonResponse(response_data, status=401)
 
     user = request.user
-    body_unicode = request.body.decode('utf-8')
-    params = dict(json.loads(body_unicode))
+    params = dict(request.POST)
+    unpack(params)
     response_data = {'message': ''}
     try:
         user_name = params.pop('username', None)
@@ -299,3 +300,9 @@ def my_urls(request: HttpRequest):
                              desktop_clicks=url.desktop_clicks, mobile_clicks=url.mobile_clicks, clicks=url.clicks, time_created=url.time_created, last_access=url.last_access, owner=url.owner.username)
 
     return JsonResponse(url_list)
+
+
+def unpack(dic: dict):
+    for key in dic.keys():
+        if isinstance(dic[key], list):
+            dic[key] = dic[key][0]
