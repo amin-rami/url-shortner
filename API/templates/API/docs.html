@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.43.0/swagger-ui.css" >
+  <style>
+    html
+    {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *,
+    *:before,
+    *:after
+    {
+      box-sizing: inherit;
+    }
+    body {
+      margin:0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.43.0/swagger-ui-bundle.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.43.0/swagger-ui-standalone-preset.js"> </script>
+<script>
+window.onload = function() {
+  var spec = {"openapi": "3.0.3", "info": {"title": "URL Shortner API", "description": "This is the documentation for URL Shortner API.The API is organized around [REST](https://en.wikipedia.org/wiki/Representational_State_Transfer). The API has predictable resource-oriented URLs, accepts [form-encoded](https://en.wikipedia.org/wiki/POST_(HTTP)#Use_for_submitting_web_forms) request bodies, returns [JSON](https://www.json.org/json-en.html)-encoded responses, and uses standard HTTP response codes and authentication.\n\nThe API is also available on Dockerhub:\n  - [Dockerhub Repository](https://hub.docker.com/repository/docker/aminrami/url-shortner)\n  \n  \nPull and run our API on your 8000 port using the following commands:\n\n    docker pull aminrami/url-shortner:latest\n    \n    docker run --publish 8000:8000 aminrami/url-shortner", "contact": {"email": "ma.rami@yahoo.com"}, "version": "1.0.11"}, "servers": [{"url": "http://localhost:8000/api"}], "tags": [{"name": "Long URL", "description": "Send your long URL to API to be shortened"}, {"name": "Short URL", "description": "Send a shortened URL to API to be redirected to the target URL"}, {"name": "User", "description": "Operations about user"}, {"name": "API Documentation", "description": "Documentation of the API"}], "paths": {"/long": {"post": {"tags": ["Long URL"], "summary": "Send a long URL to the API to be shortened and saved in database", "description": "Send a long URL to the API. The long URL must be sent in the request body. To create a short URL as an authenticated user, first you need to be logged in. In that case, your short URL will be saved in data base and the next time you re-enter the long URL, you will get the same short URL. If you are not logged in, then you will be identified as an an anonymous user.", "operationId": "long", "requestBody": {"description": "Send a long URL in JSON format as a form", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Url"}}}, "required": true}, "responses": {"200": {"description": "Successful operation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Short_Url_Response"}}}}, "400": {"description": "You have not provided the proper key/value in request body"}, "404": {"description": "Pet not found"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/short/{short_url}": {"get": {"tags": ["Short URL"], "summary": "Redirects you to the corresponding long", "description": "Redirects you to the corresponding long URL of your short URL", "operationId": "short", "parameters": [{"name": "short_url", "in": "path", "description": "Your short URL", "required": true, "schema": {"type": "string", "format": "string"}}], "responses": {"302": {"description": "Successful operation"}, "404": {"description": "No long URL corresponds to the entered short URL in the database"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/login": {"post": {"tags": ["User"], "summary": "Logs user into the system", "description": "Enter your username and password in JSON format as a form in the request body to log into the system", "operationId": "loginUser", "requestBody": {"description": "Send username/password in JSON format as a form", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/User"}}}}, "responses": {"200": {"description": "Successful operation"}, "400": {"description": "You have not provided the proper key/value format in request body"}, "401": {"description": "Incorrect username or password"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/signup": {"post": {"tags": ["User"], "summary": "Create new user accounts", "description": "Enter your username and password in JSON format as a form in the request body to create a new account with the given username/password. Note that if the provided username already exists, you will get a 403 error", "operationId": "SignupUser", "requestBody": {"description": "Send username/password in JSON format as a form", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/User"}}}}, "responses": {"200": {"description": "Successful operation"}, "400": {"description": "You have not provided the proper key/value format in request body"}, "403": {"description": "Username already exists"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/logout": {"get": {"tags": ["User"], "summary": "Logout of the current user account", "description": "Logout of the current user account. You will face no error if you are not logged in as any user", "operationId": "LogoutUser", "responses": {"200": {"description": "Successful operation"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/status": {"get": {"tags": ["User"], "summary": "Get the status of your authentication and your IP.", "description": "See who you are logged in as, also see your IP", "operationId": "StatusUser", "responses": {"200": {"description": "Successful operation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Status_Response"}}}}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/edit": {"post": {"tags": ["User"], "summary": "Edit your username or password", "description": "Enter your username and password in JSON format as a form in the request body to change the username or password of the current user(the user that you have logged in with). You can provide just a username or just a password or both in the request body. Only the provided field/fields of the current user will change. If you are not logged in as any user, you will get a 401 error. Note that you cannot change the username to an already existing username", "operationId": "EditUser", "requestBody": {"description": "Send username/password in JSON format as a form", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/User"}}}}, "responses": {"200": {"description": "Changes saved successfully"}, "400": {"description": "You have not provided the proper key/value format in request body"}, "401": {"description": "You have not logged in"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/users/myurls": {"get": {"tags": ["User"], "summary": "Get the information of all your URLs", "description": "You have to be logged in to be able to see your URLs and their info. Otherwise you will get a 401 error. If you are logged in, the response will be a JSON which the keys will be from one to the number of your URLs and their value will be the information of the URLs.", "operationId": "MyurlsUser", "responses": {"200": {"description": "Successful operation", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/My_Urls_Response"}}}}, "401": {"description": "You have not logged in"}, "405": {"description": "Inappropriate HTTP method"}}}}, "/docs": {"get": {"tags": ["API Documentation"], "summary": "API documentation page", "description": "API documentation page", "operationId": "Docs", "responses": {"200": {"description": "Successful operation"}}}}}, "components": {"schemas": {"User": {"type": "object", "properties": {"username": {"type": "string", "example": "milad_ramalho"}, "password": {"type": "string", "example": "1379"}}, "xml": {"name": "user"}}, "Url": {"type": "object", "properties": {"url": {"type": "string", "example": "time.ir"}}}, "Short_Url_Response": {"type": "object", "properties": {"message": {"type": "string", "example": "Success!"}, "url": {"type": "string", "example": "localhost:8000/api/short/scfx"}}}, "Status_Response": {"type": "object", "properties": {"message": {"type": "string", "example": "Logged in as milad_ramalho"}, "ip": {"type": "string", "example": "l127.0.0.1"}}}, "My_Urls_Response": {"type": "object", "properties": {"1": {"type": "object", "example": {"id": 12, "long_url": "time.ir", "short_url": "IiA", "desktop_clicks": 2, "mobile_clicks": 0, "clicks": 2, "time_created": "2022/09/02 11:43", "last_access": "2022/09/02 11:50", "owner": "mohammad_madadi"}}, "2": {"type": "object", "example": {"id": 13, "long_url": "yahoo.com", "short_url": "FU", "desktop_clicks": 0, "mobile_clicks": 0, "clicks": 0, "time_created": "2022/09/02 15:32", "last_access": "", "owner": "mohammad_madadi"}}}}}}};
+  // Build a system
+  const ui = SwaggerUIBundle({
+    spec: spec,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+  })
+  window.ui = ui
+}
+</script>
+</body>
+</html>

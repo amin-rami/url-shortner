@@ -1,3 +1,4 @@
+from asyncore import read
 from datetime import datetime, timedelta
 import json
 import string
@@ -306,3 +307,9 @@ def unpack(dic: dict):
     for key in dic.keys():
         if isinstance(dic[key], list):
             dic[key] = dic[key][0]
+
+
+def docs(request: HttpRequest):
+    path = 'API/docs.html'
+    return render(request, path)
+

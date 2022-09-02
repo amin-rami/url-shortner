@@ -10,5 +10,6 @@ urlpatterns = [
     path('users/signup', views.signup_api),
     path('users/status', views.status),
     path('users/edit', views.edit),
-    path('users/myurls', views.my_urls)
+    path('users/myurls', views.my_urls),
+    path('docs', views.docs)
 ]
